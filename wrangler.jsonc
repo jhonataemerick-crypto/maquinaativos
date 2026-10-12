@@ -1,6 +1,8 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "maquinaativos",
+  // LABORATÓRIO DO FUNIL: este fork deploya um Worker SEPARADO da produção da org.
+  // Produção (comeca-ai) segue intacta. Funil aprovou? O produto volta para a org por PR.
+  "name": "maquinaativos-lab",
   "main": "apps/runtime/src/index.ts",
   "compatibility_date": "2026-03-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -15,22 +17,25 @@
     "run_worker_first": ["/api/*", "/pub/*", "/saude"]
   },
   // Turnstile (opcional): `wrangler secret put TURNSTILE_SECRET` e defina TURNSTILE_SITEKEY aqui.
-  // DOMINIOS: domínio -> produto que responde na raiz (JSON em texto).
+  // DOMINIOS: domínio -> produto que responde na raiz (JSON em texto). No lab (workers.dev) não se aplica.
   "vars": { "TURNSTILE_SITEKEY": "", "DOMINIOS": "{\"tinhaprint.com.br\":\"prova-digital\",\"www.tinhaprint.com.br\":\"prova-digital\"}" },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "maquina",
-      "database_id": "f0eb4408-d50c-48ac-a414-9810c6962854",
+      "database_name": "maquina-lab",
+      // Crie o banco no painel (D1 → Create database → maquina-lab) e cole o ID aqui.
+      // database_id NÃO é segredo: pode circular no repo e no chat.
+      "database_id": "COLE_O_DATABASE_ID_DO_MAQUINA_LAB",
       "migrations_dir": "apps/runtime/migrations"
     }
   ],
-  // Cofre de provas: bucket PRIVADO. Crie antes do deploy: `pnpm cf r2:criar maquina-provas` (ou painel). Nunca ative acesso público.
-  "r2_buckets": [{ "binding": "PROVAS", "bucket_name": "maquina-provas" }],
-  // Confirma âncoras OpenTimestamps e reavalia casos abertos.
+  // Cofre de provas do LAB: bucket PRIVADO e separado do de produção. Crie antes: R2 → Create bucket → maquina-provas-lab.
+  "r2_buckets": [{ "binding": "PROVAS", "bucket_name": "maquina-provas-lab" }],
+  // Confirma âncoras OpenTimestamps e reavalia casos abertos (no lab, sem casos de prova = no-op).
   "triggers": { "crons": ["17 * * * *"] },
   "workflows": [
     { "name": "maquina-caso", "binding": "CASO_WF", "class_name": "CasoWorkflow" }
   ]
-  // Segredo de escrita: `wrangler secret put API_TOKEN` (local: `.dev.vars` na raiz).
+  // Segredo de escrita: Settings → Variables & Secrets → API_TOKEN (local: `.dev.vars` na raiz).
+  // Deploy com migrações do lab: wrangler d1 migrations apply maquina-lab --remote && wrangler deploy
 }
